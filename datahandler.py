@@ -2,6 +2,7 @@ import requests
 from PIL import Image
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 import torchvision.transforms as transforms
 
@@ -40,6 +41,19 @@ class DataHandler():
             image = np.asarray(image)
 
         return image
+
+    def show_image(self, data, mode='url'):
+        image = []
+
+        if mode == 'url':
+            image = self.get_image_from_url(data)
+
+        if mode == 'image':
+            image = np.asarray(data)
+
+        plt.imshow(image)
+        plt.show()
+
 
 
 
