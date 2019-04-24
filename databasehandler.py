@@ -1,13 +1,47 @@
-import pymysql
+import os
+import configparser
 
+import pymysql
 import pandas as pd
 
+
 class DataBaseHandler():
-    def __init__(self, db_type='mysql'):
+    def __init__(self, db_type='mysql', path_config='./config/config.ini'):
         self.db_type = db_type
+        self.path_config = path_config
+
+        if os.path.exists(self.path_config):
+            print('[INFO] Exist config file')
+            self.config = configparser.ConfigParser()
+            self.config.read(self.path_config)
+        else:
+            print('[INFO] Does not exist config file')
+
+
+
+    def set_mysql(self, name):
+        name = name.upper()
+
+        if self.config.has_section(name):
+            print('[INFO] open {} section'.format(name))
+            self.set_mysql_from_config(self.config[name])
+        else:
+            print('[INFO] Can not find {} section'.format(name))
 
     # mysql
-    def set_mysql(self, dict_info):
+    def set_mysql_from_config(self, config):
+        self.dict_info = {
+            'host': config.get('HOST'),
+            'user': config.get('USER'),
+            'pw': config.get('PW'),
+            'port': int(config.get('PORT')),
+            'db': config.get('DB'),
+            'charset': config.get('CHARSET')
+        }
+
+        self.set_mysql_from_dict(self.dict_info)
+
+    def set_mysql_from_dict(self, dict_info):
         self.dict_info = dict_info
 
         self.db_mysql = pymysql.connect(host=dict_info.get('host'),
@@ -25,7 +59,7 @@ class DataBaseHandler():
             self.cursor_mysql.execute(*sql)
         except Exception as e:
             print(e)
-            self.set_mysql(self.dict_info)
+            self.set_mysql_from_dict(self.dict_info)
 
         if 'select' in sql[0].lower():
             if kwargs.get('one'):
@@ -42,18 +76,9 @@ class DataBaseHandler():
         return df_tmp
 
 if __name__ == '__main__':
-    dbh = DataBaseHandler()
+    dbh = DataBaseHandler(path_config='./config.ini')
 
-    dict_db_info = {
-        'host': 'db.ds.mycelebs.com',
-        'user': 'celebDev',
-        'pw': 'epdlxjtkdldjstm!',
-        'port': 3306,
-        'db': 'movie_eng',
-        'charset': 'utf8'
-    }
-
-    #dbh.set_mysql(dict_db_info)
+    dbh.set_mysql("analysis")
 
     sql = 'select * from a_imdb_basics_movie_review limit 10'
     row = dbh.execute_mysql(sql)
